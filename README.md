@@ -36,8 +36,8 @@ A pre-configured [Amazon SES](https://docs.aws.amazon.com/ses/latest/dg/setting-
 
 ### Getting Started
 
-1. ```git clone https://github.com/aws-samples/Config-report```
-2. ```cd Config-Report/config_report```
+1. ```git clone https://github.com/aws-samples/config-report```
+2. ```cd config-Report/config_report```
 3. ```cdk bootstrap```
 4. ```cdk deploy ConfigReport --parameters Aggregator=<aggregator name> --parameters Recipient=<recipient email address> --parameters Sender=<sender email address> --parameters Weekday=<Day-of-week 1-7 or SUN-SAT> --parameters Hour=<time in UTC (hour)> --parameters Minute=<time in UTC (minute)> --parameters SESarn=<ses arn>```  
     
