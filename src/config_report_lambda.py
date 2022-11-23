@@ -21,6 +21,8 @@ from distutils.command.config import config
 from datetime import datetime, timedelta
 import json
 import csv
+import logging
+
 
 from botocore.exceptions import ClientError
 from email.mime.multipart import MIMEMultipart
@@ -29,10 +31,11 @@ from email.mime.application import MIMEApplication
 
 
 today = datetime.now().strftime("%Y-%m-%d")  # Current day
-filename = f'/tmp/Non_compliant_resources-{today}.csv'  # CSV report filename
 AGGREGATOR_NAME = os.environ['AGGREGATOR_NAME']  # AWS Config Aggregator name
 SENDER = os.environ['SENDER']  # SES Sender address
 RECIPIENT = os.environ['RECIPIENT']  # SES Recipient address
+Organization = os.environ['Organization']  # Identity Solutions org
+filename = f'/tmp/Non_compliant_resources-{Organization}-{today}.csv'  # CSV report filename
 
     
 
@@ -41,9 +44,9 @@ def get_link(aws_region, resource_id, resource_type):
     return f'https://{aws_region}.console.aws.amazon.com/config/home?region={aws_region}#/resources/timeline?resourceId={resource_id}&resourceType={resource_type}'
 
 # Generate the AWS Config report email 
-def send_email(today, SENDER, RECIPIENT, filename):
+def send_email(Organization, today, SENDER, RECIPIENT, filename):
     # The subject line for the email.
-    SUBJECT = f"AWS Config non-compliant resources report {today}"
+    SUBJECT = f"AWS Config non-compliant resources report in {Organization} {today}"
     ATTACHMENT = filename
     BODY_TEXT = "Hello,\r\nPlease see the attached file for the list of resources which have been non-compliant for more than 30 days."
     ses = boto3.client('ses')
@@ -95,65 +98,57 @@ def config_reporter(event, context):
         ConfigurationAggregatorName=AGGREGATOR_NAME,
         Filters={'ComplianceType': 'NON_COMPLIANT'}
         )
-    c = 0
+    
+    
     non_compliant_resources = []
-    # Get list of non compliant resources.
+    
     for rules in response.get("AggregateComplianceByConfigRules", []):
         rule_name = rules["ConfigRuleName"]
         rule_region = rules["AwsRegion"]
         account_id = rules["AccountId"]
-        region_client = boto3.client("config", region_name=rule_region)
-        response = region_client.get_compliance_details_by_config_rule(
+        
+        # Get list of non compliant resources.    
+        response = client.get_aggregate_compliance_details_by_config_rule(
+            ConfigurationAggregatorName=AGGREGATOR_NAME,
             ConfigRuleName=rule_name,
-            ComplianceTypes=['NON_COMPLIANT'])
-      
-        # For each non-compliant resource, note the ResultRecordedTime.
-        for eval_results in response.get("EvaluationResults", []):
+            AccountId=account_id,
+            AwsRegion=rule_region,
+            ComplianceType='NON_COMPLIANT'
+        )
+        
+        
+        for eval_results in response.get("AggregateEvaluationResults", []):
             eval_results_id = eval_results.get("EvaluationResultIdentifier", {})
             result_qualifier = eval_results_id.get("EvaluationResultQualifier", {})
-            resource_type = result_qualifier.get("ResourceType", None)
-            resource_id = result_qualifier.get("ResourceId", None)
-            if resource_id!=None and resource_type!=None:
-                response = region_client.get_compliance_details_by_resource(
-                    ResourceType=resource_type,
-                    ResourceId=resource_id,
-                    ComplianceTypes=['NON_COMPLIANT']
-                )
+            result_qualifier["ComplianceType"] = eval_results.get("ComplianceType", None)
+            result_qualifier["ResultRecordedTime"] = eval_results.get("ResultRecordedTime", None)
+            result_qualifier["AccountId"] = eval_results.get("AccountId", None)
+            result_qualifier["AwsRegion"] = eval_results.get("AwsRegion", None)
+            
+            if result_qualifier["ResultRecordedTime"]==None:
+                raise RuntimeError("recorded time invalid")
+            
+            today_minus_30 = datetime.now() - timedelta(days=30)          
+            
+            if result_qualifier["ResultRecordedTime"].timestamp() < today_minus_30.timestamp():
+                
+                result_qualifier["Link"] = get_link(rule_region, 
+                                            result_qualifier["ResourceId"], 
+                                            result_qualifier["ResourceType"]
+                                            )
+                print("Non compliant resource: ", result_qualifier)
+                non_compliant_resources.append(result_qualifier)
 
-                
-                resources_info = response.get("EvaluationResults", [])
-                for resource_info in resources_info:    
-                
-                    recorded_time = resource_info.get("ResultRecordedTime", None)
-                    compliance_type = resource_info.get("ComplianceType", None)
-                    
-                    # Is the Recorded time more than 30 days in past?.
-                    if recorded_time==None:
-                        raise RuntimeError("recorded time invalid")
-    
-                    today_minus_30 = datetime.now() - timedelta(days=30)
-    
-                    if recorded_time.timestamp() < today_minus_30.timestamp():
-                        details = resource_info.get("EvaluationResultIdentifier", {})\
-                        .get("EvaluationResultQualifier", {})
-                        
-                        details["ComplianceType"] = compliance_type
-                        details["ResultRecordedTime"] = recorded_time
-                        details["Region"] = rule_region
-                        details["AccountId"] = account_id
-                        details["Link"] = get_link(rule_region, details["ResourceId"], details["ResourceType"])
-                        
-                        non_compliant_resources.append(details)
     if len(non_compliant_resources) > 0:
     # Create and save the report in temporary folder to send.
         create_and_save_report(non_compliant_resources)
-        send_email(today, SENDER, RECIPIENT, filename="/tmp/ConfigReport.csv")
+        send_email(Organization, today, SENDER, RECIPIENT, filename=filename)
     else:
         print("No non compliant resources available")
                 
                 
 
-def create_and_save_report(non_compliant_resources, filename="/tmp/ConfigReport.csv"):
+def create_and_save_report(non_compliant_resources, filename=filename):
     
     fieldnames = non_compliant_resources[0].keys()
     with open(filename, 'w', newline='') as csvfile:
@@ -164,4 +159,3 @@ def create_and_save_report(non_compliant_resources, filename="/tmp/ConfigReport.
     print("Report generated " + filename)
     import os
     print(os.listdir("/tmp/"))
-        
