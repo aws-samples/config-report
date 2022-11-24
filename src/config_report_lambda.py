@@ -34,8 +34,7 @@ today = datetime.now().strftime("%Y-%m-%d")  # Current day
 AGGREGATOR_NAME = os.environ['AGGREGATOR_NAME']  # AWS Config Aggregator name
 SENDER = os.environ['SENDER']  # SES Sender address
 RECIPIENT = os.environ['RECIPIENT']  # SES Recipient address
-Organization = os.environ['Organization']  # Identity Solutions org
-filename = f'/tmp/Non_compliant_resources-{Organization}-{today}.csv'  # CSV report filename
+filename = f'/tmp/Non_compliant_resources-{today}.csv'  # CSV report filename
 
     
 
@@ -44,9 +43,9 @@ def get_link(aws_region, resource_id, resource_type):
     return f'https://{aws_region}.console.aws.amazon.com/config/home?region={aws_region}#/resources/timeline?resourceId={resource_id}&resourceType={resource_type}'
 
 # Generate the AWS Config report email 
-def send_email(Organization, today, SENDER, RECIPIENT, filename):
+def send_email(today, SENDER, RECIPIENT, filename):
     # The subject line for the email.
-    SUBJECT = f"AWS Config non-compliant resources report in {Organization} {today}"
+    SUBJECT = f"AWS Config non-compliant resources report in {today}"
     ATTACHMENT = filename
     BODY_TEXT = "Hello,\r\nPlease see the attached file for the list of resources which have been non-compliant for more than 30 days."
     ses = boto3.client('ses')
@@ -142,7 +141,7 @@ def config_reporter(event, context):
     if len(non_compliant_resources) > 0:
     # Create and save the report in temporary folder to send.
         create_and_save_report(non_compliant_resources)
-        send_email(Organization, today, SENDER, RECIPIENT, filename=filename)
+        send_email(today, SENDER, RECIPIENT, filename=filename)
     else:
         print("No non compliant resources available")
                 
