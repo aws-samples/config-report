@@ -6,8 +6,11 @@ This solution includes a serverless architecture for running a query against AWS
 
 The following figure provides the architecture for this end-to-end flow within the solution:
 
+![SolutionWorkflowDiagram](SolutionWorkflowDiagram.png)
 
-Detailed instructions here: <Link to blog>
+
+
+Detailed instructions can be found here: <Link to blog>
 
 ### Prerequisites
 
@@ -27,7 +30,7 @@ A pre-configured [Amazon SES](https://docs.aws.amazon.com/ses/latest/dg/setting-
 
 ### Architecture
 1. Amazon EventBridge rule - triggers an AWS Lambda function on a specific configurable day and time.
-2. AWS Lambda - will run API against AWS Config, creates a CSV file with details and Sends email using SES.
+2. AWS Lambda - will run API against AWS Config, creates a CSV file with details and sends email using SES.
 3. AWS Config aggregator - collects AWS Config configuration and compliance data.
 4. Amazon Simple Email Service - will be used to send an email with the CSV file created by Lambda function.
 

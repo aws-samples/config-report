@@ -1,0 +1,210 @@
+{
+  "version": "20.0.0",
+  "artifacts": {
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    },
+    "ConfigReport.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "ConfigReport.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "ConfigReport": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://unknown-account/unknown-region",
+      "properties": {
+        "templateFile": "ConfigReport.template.json",
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-deploy-role-${AWS::AccountId}-${AWS::Region}",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-cfn-exec-role-${AWS::AccountId}-${AWS::Region}",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}/68c2069235f421500027f24c8ef0d6b2e21669a7d6c44136734f12df140c0027.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "ConfigReport.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-lookup-role-${AWS::AccountId}-${AWS::Region}",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "ConfigReport.assets"
+      ],
+      "metadata": {
+        "/ConfigReport/Aggregator": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "Aggregator"
+          }
+        ],
+        "/ConfigReport/Recipient": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "Recipient"
+          }
+        ],
+        "/ConfigReport/Sender": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "Sender"
+          }
+        ],
+        "/ConfigReport/Weekday": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "Weekday"
+          }
+        ],
+        "/ConfigReport/Hour": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "Hour"
+          }
+        ],
+        "/ConfigReport/Minute": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "Minute"
+          }
+        ],
+        "/ConfigReport/SESarn": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SESarn"
+          }
+        ],
+        "/ConfigReport/config_reporter": [
+          {
+            "type": "aws:cdk:warning",
+            "data": "AWS Lambda has changed their authorization strategy, which may cause client invocations using the 'Qualifier' parameter of the lambda function to fail with Access Denied errors.\nIf you are using a lambda Version or Alias, make sure to call 'grantInvoke' or 'addPermission' on the Version or Alias, not the underlying Function\nSee: https://github.com/aws/aws-cdk/issues/19273",
+            "trace": [
+              "Annotations.addMessage (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/jsii-kernel-EAHw31/node_modules/aws-cdk-lib/core/lib/annotations.js:1:1213)",
+              "Annotations.addWarning (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/jsii-kernel-EAHw31/node_modules/aws-cdk-lib/core/lib/annotations.js:1:600)",
+              "Function.warnInvokeFunctionPermissions (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/jsii-kernel-EAHw31/node_modules/aws-cdk-lib/aws-lambda/lib/function-base.js:1:1050)",
+              "get currentVersion [as currentVersion] (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/jsii-kernel-EAHw31/node_modules/aws-cdk-lib/aws-lambda/lib/function.js:1:8290)",
+              "Trigger.determineHandlerArn (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/jsii-kernel-EAHw31/node_modules/aws-cdk-lib/triggers/lib/trigger.js:1:1408)",
+              "new Trigger (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/jsii-kernel-EAHw31/node_modules/aws-cdk-lib/triggers/lib/trigger.js:1:629)",
+              "Kernel._create (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/tmpefjt_5y_/lib/program.js:7485:29)",
+              "Kernel.create (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/tmpefjt_5y_/lib/program.js:7220:29)",
+              "KernelHost.processRequest (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/tmpefjt_5y_/lib/program.js:10473:36)",
+              "KernelHost.run (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/tmpefjt_5y_/lib/program.js:10433:22)",
+              "Immediate._onImmediate (/private/var/folders/hp/ygmg9x5x3l798ssxgcqxmmj40000gs/T/tmpefjt_5y_/lib/program.js:10434:46)",
+              "process.processImmediate (node:internal/timers:471:21)"
+            ]
+          }
+        ],
+        "/ConfigReport/config_reporter/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "configreporterServiceRole71C54B84"
+          }
+        ],
+        "/ConfigReport/config_reporter/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "configreporterServiceRoleDefaultPolicyCB7B9213"
+          }
+        ],
+        "/ConfigReport/config_reporter/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "configreporter21132CDB"
+          }
+        ],
+        "/ConfigReport/config_reporter/LogRetention/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "configreporterLogRetention5CA39DFA"
+          }
+        ],
+        "/ConfigReport/config_reporter/CurrentVersion/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "configreporterCurrentVersion35D5A1A50dbc60eec94c36e8b2795a636b865626"
+          }
+        ],
+        "/ConfigReport/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+          }
+        ],
+        "/ConfigReport/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB"
+          }
+        ],
+        "/ConfigReport/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A"
+          }
+        ],
+        "/ConfigReport/ConfigReporterCW/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ConfigReporterCW4A3B8FC4"
+          }
+        ],
+        "/ConfigReport/ConfigReporterCW/AllowEventRuleConfigReportconfigreporter49B0B0E0": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ConfigReporterCWAllowEventRuleConfigReportconfigreporter49B0B0E0C085C5BB"
+          }
+        ],
+        "/ConfigReport/TriggerLambda/Default/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TriggerLambda"
+          }
+        ],
+        "/ConfigReport/AWSCDK.TriggerCustomResourceProviderCustomResourceProvider/Role": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AWSCDKTriggerCustomResourceProviderCustomResourceProviderRoleE18FAF0A"
+          }
+        ],
+        "/ConfigReport/AWSCDK.TriggerCustomResourceProviderCustomResourceProvider/Handler": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AWSCDKTriggerCustomResourceProviderCustomResourceProviderHandler97BECD91"
+          }
+        ],
+        "/ConfigReport/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/ConfigReport/CDKMetadata/Condition": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadataAvailable"
+          }
+        ],
+        "/ConfigReport/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/ConfigReport/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "ConfigReport"
+    }
+  }
+}

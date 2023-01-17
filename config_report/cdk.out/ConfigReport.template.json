@@ -1,0 +1,692 @@
+{
+ "Parameters": {
+  "Aggregator": {
+   "Type": "String",
+   "Default": "aggregator",
+   "Description": "Name of AWS Config Aggregator"
+  },
+  "Recipient": {
+   "Type": "String",
+   "Default": "recipient@email.com",
+   "Description": "SES recipient email address"
+  },
+  "Sender": {
+   "Type": "String",
+   "Default": "sender@email.com",
+   "Description": "SES sender email address"
+  },
+  "Weekday": {
+   "Type": "String",
+   "Default": "2",
+   "Description": "Day-of-week 1-7 or SUN-SAT Lambda will run. For example: for Monday, type 2"
+  },
+  "Hour": {
+   "Type": "String",
+   "Default": "23",
+   "Description": "The time (hour) the Lambda will run. For example: for 23:50 UTC, type 23"
+  },
+  "Minute": {
+   "Type": "String",
+   "Default": "50",
+   "Description": "The time (minute) the Lambda will run. For example: for 23:50 UTC, type 50"
+  },
+  "SESarn": {
+   "Type": "String",
+   "Default": "arn:aws:ses:us-east-1:888888888888:identity/example.com",
+   "Description": "The preconfigured SES arn, for example: arn:aws:ses:us-east-1:888888888888:identity/example.com"
+  },
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Resources": {
+  "configreporterServiceRole71C54B84": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/config_reporter/ServiceRole/Resource"
+   }
+  },
+  "configreporterServiceRoleDefaultPolicyCB7B9213": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "ses:SendRawEmail",
+       "Condition": {
+        "ForAllValues:StringLike": {
+         "ses:Recipients": {
+          "Ref": "Recipient"
+         }
+        },
+        "StringLike": {
+         "ses:FromAddress": {
+          "Ref": "Sender"
+         }
+        }
+       },
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "SESarn"
+       }
+      },
+      {
+       "Action": [
+        "config:DescribeAggregateComplianceByConfigRules",
+        "config:GetAggregateComplianceDetailsByConfigRule"
+       ],
+       "Condition": {
+        "StringEquals": {
+         "aws:ResourceAccount": [
+          {
+           "Ref": "AWS::AccountId"
+          }
+         ]
+        }
+       },
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "configreporterServiceRoleDefaultPolicyCB7B9213",
+    "Roles": [
+     {
+      "Ref": "configreporterServiceRole71C54B84"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/config_reporter/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "configreporter21132CDB": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "43a692f10489d7f8313ebac0168b3c581615b83b9726ac4589239d987a1bac93.zip"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "configreporterServiceRole71C54B84",
+      "Arn"
+     ]
+    },
+    "Environment": {
+     "Variables": {
+      "AGGREGATOR_NAME": {
+       "Ref": "Aggregator"
+      },
+      "RECIPIENT": {
+       "Ref": "Recipient"
+      },
+      "SENDER": {
+       "Ref": "Sender"
+      }
+     }
+    },
+    "Handler": "config_report_lambda.config_reporter",
+    "Runtime": "python3.8",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "configreporterServiceRoleDefaultPolicyCB7B9213",
+    "configreporterServiceRole71C54B84"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/config_reporter/Resource",
+    "aws:asset:path": "asset.43a692f10489d7f8313ebac0168b3c581615b83b9726ac4589239d987a1bac93",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "configreporterLogRetention5CA39DFA": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "configreporter21132CDB"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 30
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/config_reporter/LogRetention/Resource"
+   }
+  },
+  "configreporterCurrentVersion35D5A1A50dbc60eec94c36e8b2795a636b865626": {
+   "Type": "AWS::Lambda::Version",
+   "Properties": {
+    "FunctionName": {
+     "Ref": "configreporter21132CDB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/config_reporter/CurrentVersion/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:DeleteRetentionPolicy",
+        "logs:PutRetentionPolicy"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "Roles": [
+     {
+      "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "index.handler",
+    "Runtime": "nodejs14.x",
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "4cd567bf52e0f31674ae9e960efae8855b8b1249fa9997799ae47dc9f80e9ff8.zip"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource",
+    "aws:asset:path": "asset.4cd567bf52e0f31674ae9e960efae8855b8b1249fa9997799ae47dc9f80e9ff8",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "ConfigReporterCW4A3B8FC4": {
+   "Type": "AWS::Events::Rule",
+   "Properties": {
+    "ScheduleExpression": {
+     "Fn::Join": [
+      "",
+      [
+       "cron(",
+       {
+        "Ref": "Minute"
+       },
+       " ",
+       {
+        "Ref": "Hour"
+       },
+       " ? * ",
+       {
+        "Ref": "Weekday"
+       },
+       " *)"
+      ]
+     ]
+    },
+    "State": "ENABLED",
+    "Targets": [
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "configreporter21132CDB",
+        "Arn"
+       ]
+      },
+      "Id": "Target0"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/ConfigReporterCW/Resource"
+   }
+  },
+  "ConfigReporterCWAllowEventRuleConfigReportconfigreporter49B0B0E0C085C5BB": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "configreporter21132CDB",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "ConfigReporterCW4A3B8FC4",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/ConfigReporterCW/AllowEventRuleConfigReportconfigreporter49B0B0E0"
+   }
+  },
+  "TriggerLambda": {
+   "Type": "Custom::Trigger",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "AWSCDKTriggerCustomResourceProviderCustomResourceProviderHandler97BECD91",
+      "Arn"
+     ]
+    },
+    "HandlerArn": {
+     "Ref": "configreporterCurrentVersion35D5A1A50dbc60eec94c36e8b2795a636b865626"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/TriggerLambda/Default/Default"
+   }
+  },
+  "AWSCDKTriggerCustomResourceProviderCustomResourceProviderRoleE18FAF0A": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyName": "Inline",
+      "PolicyDocument": {
+       "Version": "2012-10-17",
+       "Statement": [
+        {
+         "Effect": "Allow",
+         "Action": [
+          "lambda:InvokeFunction"
+         ],
+         "Resource": [
+          {
+           "Ref": "configreporterCurrentVersion35D5A1A50dbc60eec94c36e8b2795a636b865626"
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/AWSCDK.TriggerCustomResourceProviderCustomResourceProvider/Role"
+   }
+  },
+  "AWSCDKTriggerCustomResourceProviderCustomResourceProviderHandler97BECD91": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": {
+      "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+     },
+     "S3Key": "c38f97e0a56acf79b92716f442bbe4c99fc00e269ffbeee36ebecd97bfd50c4e.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "__entrypoint__.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "AWSCDKTriggerCustomResourceProviderCustomResourceProviderRoleE18FAF0A",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs14.x"
+   },
+   "DependsOn": [
+    "AWSCDKTriggerCustomResourceProviderCustomResourceProviderRoleE18FAF0A"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/AWSCDK.TriggerCustomResourceProviderCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.c38f97e0a56acf79b92716f442bbe4c99fc00e269ffbeee36ebecd97bfd50c4e",
+    "aws:asset:property": "Code"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1VPy07DMBD8lt6dhbYS4kojceJgBcS1cp2tWeKH5LWLqij/ju1WEZxmZme8nt3B7hm2G/XDnR6nztIJ5vek9CT6s5cqKocJoyj+cbbKnUYF82v2OlHwNbLyT4x8n/2hEqMjrmoRpBzMQ7BYjYYyWNLXlmtsEbw/KmZMDC8VioZD1hOmg2IUNhiGt2CG0sm3X/FSCJe1+b624LKI9ricYcibNkYOOWoUK0mRjCk94eNGRJ85Bbf6/6WM4UJjTZ19H/xIqV0kr+kr+Ic9bB/hafPNRF3MpZhDGG74CzmCNhxfAQAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConfigReport/CDKMetadata/Default"
+   },
+   "Condition": "CDKMetadataAvailable"
+  }
+ },
+ "Conditions": {
+  "CDKMetadataAvailable": {
+   "Fn::Or": [
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "af-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-northeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ap-southeast-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "ca-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "cn-northwest-1"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-central-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-north-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-2"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "eu-west-3"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "me-south-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "sa-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-east-2"
+       ]
+      }
+     ]
+    },
+    {
+     "Fn::Or": [
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-west-1"
+       ]
+      },
+      {
+       "Fn::Equals": [
+        {
+         "Ref": "AWS::Region"
+        },
+        "us-west-2"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

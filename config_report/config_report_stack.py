@@ -136,7 +136,7 @@ class ConfigReport(Stack):
         ))
         rule = Rule(self, "ConfigReporterCW",
                     schedule=Schedule.cron(
-                       week_day=Weekday.value_as_string ,minute=Minute.value_as_string, hour=Hour.value_as_string)
+                       week_day=Weekday.value_as_string, minute=Minute.value_as_string, hour=Hour.value_as_string)
                     )
         rule.add_target(targets.LambdaFunction(config_reporter_lambda))
         trigger = triggers.Trigger(
