@@ -8,9 +8,9 @@ The following figure provides the architecture for this end-to-end flow within t
 
 ![SolutionWorkflowDiagram](SolutionWorkflowDiagram.png)
 
+1. The Lambda function will run a query against AWS Config, thereby getting the list of non-compliant resources over a period of 30 days.
+2. The Lambda function will generate a CSV report and send it via email using Amazon Simple Email Service (Amazon SES)
 
-
-Detailed instructions can be found here: <Link to blog>
 
 ### Prerequisites
 
